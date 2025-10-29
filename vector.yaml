@@ -1,0 +1,52 @@
+# Define the TCP input sources
+sources:
+  tcp_input_sysmon:
+    type: socket
+    address: 127.0.0.1:12515
+    mode: tcp
+    decoding:
+      codec: json
+
+  tcp_input_syslog:
+    type: socket
+    address: 127.0.0.1:12514
+    mode: tcp
+    decoding:
+      codec: json
+
+  tcp_input_audit:
+    type: socket
+    address: 127.0.0.1:12513
+    mode: tcp
+    decoding:
+      codec: json
+
+# Define transforms to add log.type for each source
+transforms:
+  add_sysmon_type:
+    type: remap
+    inputs: [tcp_input_sysmon]
+    source: |
+      .log.type = "linux-sysmon"
+
+  add_syslog_type:
+    type: remap
+    inputs: [tcp_input_syslog]
+    source: |
+      .log.type = "linux-syslog"
+
+  add_audit_type:
+    type: remap
+    inputs: [tcp_input_audit]
+    source: |
+      .log.type = "linux-audit"
+
+# Define the TCP output sink
+sinks:
+  tcp_output:
+    type: socket
+    inputs: [add_sysmon_type, add_syslog_type, add_audit_type]
+    address: 127.0.0.1:12516
+    mode: tcp
+    encoding:
+      codec: json
